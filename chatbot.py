@@ -198,6 +198,23 @@ st.markdown(f"""
 def main():    
     setup_sidebar()
     
+    # Custom CSS for styling buttons
+    st.markdown("""
+        <style>
+        .stButton > button {
+            color: white; /* Change text color */
+            background-color: black; /* Change button background color */
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .stButton > button:hover {
+            background-color: black; /* Change background color on hover */
+        }
+        </style>
+        """, unsafe_allow_html=True)
     # Main content area
     st.title("Welcome to Blacifer")
     st.write("Your trusted partner for outsourcing chatbot services.")
