@@ -1,0 +1,6 @@
+google-generativeai
+python-dotenv
+instructor==1.7.9
+litellm==1.60.2
+tenacity>=9.0.0,<10.0.0
+httpx>=0.23.0,<0.28.0
