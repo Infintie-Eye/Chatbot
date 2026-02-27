@@ -1,0 +1,263 @@
+{
+  "info": {
+    "_postman_id": "conrux-ai-expert-chatbot-v3",
+    "name": "Conrux AI Expert Chatbot — Full API Collection",
+    "description": "Complete Postman collection for the Conrux AI Expert Chatbot API (FastAPI + Gemini 2.0 Flash). Covers health checks, session management, multi-turn chat, image analysis, and document processing.\n\n**Base URL:** `{{base_url}}` (default: http://localhost:8000)\n**Auth:** Set `{{api_key}}` if CHATBOT_API_KEY is configured, or leave blank for open access.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "3.0.0"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "api_key",  "value": "",                      "type": "string" },
+    { "key": "session_id", "value": "",                    "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health & Info",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/health", "host": ["{{base_url}}"], "path": ["api","v1","health"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "pm.test('Gemini connected', () => pm.expect(pm.response.json().data.gemini_status).to.equal('connected'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Model & Config Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/info", "host": ["{{base_url}}"], "path": ["api","v1","info"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has text_model', () => pm.expect(pm.response.json().data).to.have.property('text_model'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "Create Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key", "value": "{{api_key}}", "disabled": true }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/v1/chat/session", "host": ["{{base_url}}"], "path": ["api","v1","chat","session"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json().data;",
+                  "pm.test('Session ID present', () => pm.expect(data.session_id).to.be.a('string'));",
+                  "pm.environment.set('session_id', data.session_id);",
+                  "pm.collectionVariables.set('session_id', data.session_id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key", "value": "{{api_key}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Explain quantum entanglement in a poetic way.\",\n  \"session_id\": \"{{session_id}}\",\n  \"stream\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/chat", "host": ["{{base_url}}"], "path": ["api","v1","chat"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has response text', () => pm.expect(pm.response.json().data.response).to.be.a('string').and.not.empty);",
+                  "pm.test('Has session_id', () => pm.expect(pm.response.json().data.session_id).to.be.a('string'));",
+                  "pm.test('Has pipeline_stages', () => pm.expect(pm.response.json().data.pipeline_stages).to.be.an('array').with.length.above(0));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Multi-turn Follow-up",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Now explain it like I'm a 10-year-old.\",\n  \"session_id\": \"{{session_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/chat", "host": ["{{base_url}}"], "path": ["api","v1","chat"] }
+          }
+        },
+        {
+          "name": "Custom System Prompt",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Introduce yourself.\",\n  \"session_id\": \"{{session_id}}\",\n  \"system_prompt\": \"You are a medieval wizard who speaks in ancient English and is obsessed with potions.\",\n  \"temperature\": 0.9\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/chat", "host": ["{{base_url}}"], "path": ["api","v1","chat"] }
+          }
+        },
+        {
+          "name": "Get Conversation History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/chat/history/{{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","chat","history","{{session_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Messages array', () => pm.expect(pm.response.json().data.messages).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clear Conversation History",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/chat/history/{{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","chat","history","{{session_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Cleared message', () => pm.expect(pm.response.json().data.message).to.include('cleared'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analysis",
+      "item": [
+        {
+          "name": "Analyse Image",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-API-Key", "value": "{{api_key}}", "disabled": true }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file",       "type": "file", "src": "/path/to/your/image.jpg", "description": "Replace with your image file" },
+                { "key": "prompt",     "value": "What objects can you identify in this image? Describe the mood and composition.", "type": "text" },
+                { "key": "session_id", "value": "{{session_id}}", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/v1/analyze/image", "host": ["{{base_url}}"], "path": ["api","v1","analyze","image"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has analysis', () => pm.expect(pm.response.json().data.analysis).to.be.a('string').and.not.empty);",
+                  "pm.test('Has image_size', () => pm.expect(pm.response.json().data.image_size).to.be.an('object'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analyse Document",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-API-Key", "value": "{{api_key}}", "disabled": true }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file",       "type": "file", "src": "/path/to/your/document.pdf", "description": "Replace with your document" },
+                { "key": "query",      "value": "Summarize the key points of this document in bullet format.", "type": "text" },
+                { "key": "session_id", "value": "{{session_id}}", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/v1/analyze/document", "host": ["{{base_url}}"], "path": ["api","v1","analyze","document"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has analysis', () => pm.expect(pm.response.json().data.analysis).to.be.a('string').and.not.empty);",
+                  "pm.test('Has file_type', () => pm.expect(pm.response.json().data.file_type).to.be.a('string'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

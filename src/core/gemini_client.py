@@ -1,271 +1,164 @@
 """
-Gemini API client for handling text, image, and file processing.
-Updated for Gemini 2.0 Flash model with enhanced capabilities.
+Gemini Client — uses the battle-tested legacy google.generativeai SDK.
+Fully supports gemini-1.5-flash on the free tier.
+FutureWarning is suppressed intentionally; migration to google.genai requires
+Gemini billing enabled, which is incompatible with free-tier API keys.
 """
 import logging
-import base64
 import io
-from typing import Dict, List, Any, Optional, Union
+import warnings
+from typing import Dict, List, Any, Optional
 from PIL import Image
-import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from config.settings import settings
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
+# Suppress FutureWarning from google.generativeai (intentional — new SDK blocks free tier)
+warnings.filterwarnings("ignore", category=FutureWarning, module="google")
+
+import google.generativeai as genai
+genai.configure(api_key=settings.gemini_api_key)
+
+
 class GeminiClient:
-    """Client for interacting with Google's Gemini 2.0 Flash API."""
+    """
+    Gemini 1.5 Flash client using the legacy google.generativeai SDK.
+    Works with free-tier API keys (15 RPM, 1M tokens/day).
+    """
 
     def __init__(self):
-        """Initialize the Gemini client with 2.0 Flash model."""
         if not settings.gemini_api_key:
-            raise ValueError("Gemini API key is required")
+            raise ValueError("GEMINI_API_KEY is required.")
+        logger.info(f"GeminiClient ready | model: {settings.text_model} | sdk: google.generativeai")
 
-        genai.configure(api_key=settings.gemini_api_key)
-
-        # Use the same model for both text and vision (Gemini 2.0 Flash supports both)
-        self.model = genai.GenerativeModel(settings.text_model)
-
-        # Enhanced generation config for Gemini 2.0 Flash
-        self.generation_config = genai.types.GenerationConfig(
-            temperature=settings.temperature,
+    def _gen_config(self, temperature: Optional[float] = None):
+        return genai.types.GenerationConfig(
+            temperature=temperature if temperature is not None else settings.temperature,
             max_output_tokens=settings.max_tokens,
-            top_p=0.95,  # Increased for better creativity
-            top_k=64,  # Optimized for Gemini 2.0 Flash
-            candidate_count=1,
-            stop_sequences=None,
+            top_p=settings.top_p,
+            top_k=settings.top_k,
         )
 
-        # Updated safety settings for Gemini 2.0
-        self.safety_settings = [
-            {
-                "category": "HARM_CATEGORY_HARASSMENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-                "category": "HARM_CATEGORY_HATE_SPEECH",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-            }
-        ]
+    # ══════════════  TEXT — SINGLE TURN  ══════════════
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=10), reraise=True)
     def generate_text_response(
-            self,
-            prompt: str,
-            context: Optional[str] = None,
-            system_instruction: Optional[str] = None
+        self,
+        prompt: str,
+        context: Optional[str] = None,
+        system_instruction: Optional[str] = None,
+        temperature: Optional[float] = None,
     ) -> str:
-        """
-        Generate text response using Gemini 2.0 Flash.
-        
-        Args:
-            prompt: User prompt
-            context: Additional context
-            system_instruction: System instruction for the model
-            
-        Returns:
-            Generated response text
-        """
-        try:
-            # Create model with system instruction if provided
-            if system_instruction:
-                model_with_system = genai.GenerativeModel(
-                    settings.text_model,
-                    system_instruction=system_instruction
-                )
-            else:
-                model_with_system = self.model
+        parts = []
+        if context:
+            parts.append(f"Context:\n{context}\n")
+        parts.append(prompt)
+        full_prompt = "\n\n".join(parts)
 
-            # Prepare the full prompt
-            full_prompt = []
+        model = genai.GenerativeModel(
+            settings.text_model,
+            system_instruction=system_instruction,
+        )
+        resp = model.generate_content(full_prompt, generation_config=self._gen_config(temperature))
+        return self._extract(resp)
 
-            if context:
-                full_prompt.append(f"Context: {context}")
+    # ══════════════  TEXT — MULTI TURN  ══════════════
 
-            full_prompt.append(f"User: {prompt}")
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=10), reraise=True)
+    def generate_with_history(
+        self,
+        prompt: str,
+        history: List[Dict[str, str]],
+        system_instruction: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> str:
+        model = genai.GenerativeModel(
+            settings.text_model,
+            system_instruction=system_instruction,
+        )
+        chat = model.start_chat(history=history or [])
+        resp = chat.send_message(prompt, generation_config=self._gen_config(temperature))
+        return self._extract(resp)
 
-            final_prompt = "\n\n".join(full_prompt)
+    # ══════════════  IMAGE ANALYSIS  ══════════════
 
-            response = model_with_system.generate_content(
-                final_prompt,
-                generation_config=self.generation_config,
-                safety_settings=self.safety_settings
-            )
-
-            if response.candidates and response.candidates[0].content.parts:
-                return response.candidates[0].content.parts[0].text
-            else:
-                return "I'm sorry, I couldn't generate a response. Please try rephrasing your question."
-
-        except Exception as e:
-            logger.error(f"Text generation error: {str(e)}")
-            return f"Error generating response: {str(e)}"
-
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=10), reraise=True)
     def analyze_image(
-            self,
-            image: Image.Image,
-            prompt: str,
-            system_instruction: Optional[str] = None
+        self,
+        image: Image.Image,
+        prompt: str,
+        system_instruction: Optional[str] = None,
     ) -> str:
-        """
-        Analyze image using Gemini 2.0 Flash (unified model for vision).
-        
-        Args:
-            image: PIL Image object
-            prompt: Analysis prompt
-            system_instruction: System instruction for the model
-            
-        Returns:
-            Analysis result
-        """
-        try:
-            # Create model with system instruction if provided
-            if system_instruction:
-                model_with_system = genai.GenerativeModel(
-                    settings.vision_model,  # Same as text_model for Gemini 2.0 Flash
-                    system_instruction=system_instruction
-                )
-            else:
-                model_with_system = self.model
+        model = genai.GenerativeModel(
+            settings.vision_model,
+            system_instruction=system_instruction,
+        )
+        resp = model.generate_content(
+            [prompt, image],
+            generation_config=self._gen_config(),
+        )
+        return self._extract(resp)
 
-            # Create content with image and text
-            content = [prompt, image]
+    # ══════════════  DOCUMENT ANALYSIS  ══════════════
 
-            response = model_with_system.generate_content(
-                content,
-                generation_config=self.generation_config,
-                safety_settings=self.safety_settings
-            )
-
-            if response.candidates and response.candidates[0].content.parts:
-                return response.candidates[0].content.parts[0].text
-            else:
-                return "I'm sorry, I couldn't analyze the image. Please try again."
-
-        except Exception as e:
-            logger.error(f"Image analysis error: {str(e)}")
-            return f"Error analyzing image: {str(e)}"
-
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=10), reraise=True)
     def process_document(
-            self,
-            content: str,
-            query: str,
-            file_type: str,
-            system_instruction: Optional[str] = None
+        self,
+        content: str,
+        query: str,
+        file_type: str,
+        system_instruction: Optional[str] = None,
     ) -> str:
-        """
-        Process document content using Gemini 2.0 Flash.
-        
-        Args:
-            content: Document content
-            query: User query about the document
-            file_type: Type of file being processed
-            system_instruction: System instruction for the model
-            
-        Returns:
-            Analysis result
-        """
-        try:
-            # Create model with system instruction if provided
-            if system_instruction:
-                model_with_system = genai.GenerativeModel(
-                    settings.text_model,
-                    system_instruction=system_instruction
-                )
-            else:
-                model_with_system = self.model
+        # Cap content to stay within token limits
+        prompt = (
+            f"Document Type: {file_type.upper()}\n\n"
+            f"Document Content:\n```\n{content[:6000]}\n```\n\n"
+            f"User Query: {query}\n\n"
+            "Provide a comprehensive, accurate response based only on the document."
+        )
+        model = genai.GenerativeModel(
+            settings.text_model,
+            system_instruction=system_instruction,
+        )
+        resp = model.generate_content(prompt, generation_config=self._gen_config())
+        return self._extract(resp)
 
-            # Prepare the prompt with better structure for Gemini 2.0 Flash
-            prompt_parts = [
-                f"Document Type: {file_type.upper()}",
-                f"Document Content:\n```\n{content}\n```",
-                f"User Query: {query}",
-                "\nPlease analyze the document and provide a comprehensive response to the user's query."
-            ]
-
-            final_prompt = "\n\n".join(prompt_parts)
-
-            response = model_with_system.generate_content(
-                final_prompt,
-                generation_config=self.generation_config,
-                safety_settings=self.safety_settings
-            )
-
-            if response.candidates and response.candidates[0].content.parts:
-                return response.candidates[0].content.parts[0].text
-            else:
-                return "I'm sorry, I couldn't process the document. Please try again."
-
-        except Exception as e:
-            logger.error(f"Document processing error: {str(e)}")
-            return f"Error processing document: {str(e)}"
-
-    def get_model_info(self) -> Dict[str, Any]:
-        """Get information about available models."""
-        try:
-            models = []
-            for model in genai.list_models():
-                if 'generateContent' in model.supported_generation_methods:
-                    models.append({
-                        'name': model.name,
-                        'display_name': model.display_name,
-                        'description': model.description,
-                        'version': getattr(model, 'version', 'Unknown'),
-                        'input_token_limit': getattr(model, 'input_token_limit', 'Unknown'),
-                        'output_token_limit': getattr(model, 'output_token_limit', 'Unknown')
-                    })
-
-            # Add current configuration info
-            current_config = {
-                'current_text_model': settings.text_model,
-                'current_vision_model': settings.vision_model,
-                'max_tokens': settings.max_tokens,
-                'temperature': settings.temperature,
-                'model_version': '2.0-flash'
-            }
-
-            return {
-                'available_models': models,
-                'current_configuration': current_config
-            }
-        except Exception as e:
-            logger.error(f"Error getting model info: {str(e)}")
-            return {'models': [], 'error': str(e)}
+    # ══════════════  UTILITIES  ══════════════
 
     def test_connection(self) -> Dict[str, Any]:
-        """Test the connection to Gemini API."""
+        """Quick connectivity test — returns status dict."""
         try:
-            test_response = self.generate_text_response("Hello, this is a connection test.")
-            return {
-                'status': 'success',
-                'model': settings.text_model,
-                'response_preview': test_response[:100] + "..." if len(test_response) > 100 else test_response
-            }
+            result = self.generate_text_response("Reply with the word: OK")
+            return {"status": "connected", "response_preview": result[:80]}
         except Exception as e:
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
-# Global client instance
+    def get_model_info(self) -> Dict[str, Any]:
+        return {
+            "current_model": settings.text_model,
+            "sdk": "google.generativeai (legacy)",
+            "api_key_set": bool(settings.gemini_api_key),
+        }
+
+    @staticmethod
+    def _extract(response) -> str:
+        """Safely extract text from a GenerateResponse."""
+        try:
+            if response.candidates and response.candidates[0].content.parts:
+                return response.candidates[0].content.parts[0].text
+        except Exception:
+            pass
+        try:
+            return response.text
+        except Exception:
+            return "I'm sorry, I couldn't generate a response. Please try again."
+
+
+# ── Singleton ──────────────────────────────────────────────────────────────────
 gemini_client = GeminiClient()

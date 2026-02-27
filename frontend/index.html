@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conrux AI — Elite Intelligence</title>
+<meta name="description" content="Conrux AI — An elite AI assistant by Blacifer, powered by Google Gemini 2.0 Flash. Experience intelligence like never before." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/css/main.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════  CANVAS FOR GEOMETRIC PATTERNS  ═══════════════════════ -->
+<canvas id="geo-canvas"></canvas>
+
+<!-- ═══════════════════════  PARTICLES  ═══════════════════════ -->
+<div id="particles" aria-hidden="true"></div>
+
+<!-- ═══════════════════════  NAVBAR  ═══════════════════════ -->
+<nav class="navbar" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <!-- Crown SVG Icon -->
+      <svg class="brand-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polygon points="5,30 10,14 20,22 30,14 35,30" fill="none" stroke="#C9A227" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="5" cy="30" r="2.5" fill="#C9A227"/>
+        <circle cx="35" cy="30" r="2.5" fill="#C9A227"/>
+        <circle cx="20" cy="10" r="2.5" fill="#FFD700"/>
+        <line x1="5" y1="30" x2="35" y2="30" stroke="#C9A227" stroke-width="1.5"/>
+        <polygon points="20,4 22,10 20,12 18,10" fill="#FFD700" opacity="0.8"/>
+      </svg>
+      <span class="brand-name">CONRUX</span>
+      <span class="brand-sub">AI</span>
+    </div>
+
+    <ul class="nav-links" role="list">
+      <li><a href="#chat-section" class="nav-link active" aria-current="page">Chat</a></li>
+      <li><a href="#vision-section" class="nav-link">Vision</a></li>
+      <li><a href="#docs-section" class="nav-link">Documents</a></li>
+      <li><a href="/docs" class="nav-link" target="_blank" rel="noopener">API Docs</a></li>
+    </ul>
+
+    <div class="nav-status">
+      <span class="status-dot" id="status-dot" aria-label="Connection status"></span>
+      <span class="status-text" id="status-text">Connecting…</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════  HERO  ═══════════════════════ -->
+<header class="hero" id="hero">
+  <div class="hero-ornament top-left" aria-hidden="true">
+    <!-- Diamond ornament SVG -->
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <polygon points="60,5 115,60 60,115 5,60" fill="none" stroke="#C9A227" stroke-width="0.8" opacity="0.4"/>
+      <polygon points="60,20 100,60 60,100 20,60" fill="none" stroke="#C9A227" stroke-width="0.6" opacity="0.3"/>
+      <polygon points="60,35 85,60 60,85 35,60" fill="none" stroke="#FFD700" stroke-width="0.5" opacity="0.25"/>
+      <line x1="60" y1="5" x2="60" y2="115" stroke="#C9A227" stroke-width="0.4" opacity="0.2"/>
+      <line x1="5" y1="60" x2="115" y2="60" stroke="#C9A227" stroke-width="0.4" opacity="0.2"/>
+    </svg>
+  </div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow">
+      <span class="eyebrow-line"></span>
+      POWERED BY GEMINI 2.0 FLASH
+      <span class="eyebrow-line"></span>
+    </p>
+    <h1 class="hero-title">
+      <span class="title-line">Elite</span>
+      <span class="title-line gold">Intelligence</span>
+      <span class="title-line">Unleashed</span>
+    </h1>
+    <p class="hero-subtitle">Step into a world where conversation meets artistry. Conrux AI merges cutting-edge Gemini 2.0 Flash reasoning with a design forged in gold.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('chat-section').scrollIntoView({behavior:'smooth'})" id="start-chat-hero-btn">
+        <!-- Spark SVG -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill="#0A0A0A" stroke="#0A0A0A" stroke-width="0.5"/>
+        </svg>
+        Begin Your Session
+      </button>
+      <a href="/docs" class="btn-ghost" target="_blank" rel="noopener">
+        <!-- Code SVG -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <polyline points="16,18 22,12 16,6" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <polyline points="8,6 2,12 8,18" stroke="currentColor" stroke-width="1.8" fill="none"/>
+        </svg>
+        Explore API
+      </a>
+    </div>
+    <!-- Stats row -->
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-val" id="stat-model">2.0 Flash</span>
+        <span class="stat-label">Gemini Model</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true">✦</div>
+      <div class="stat">
+        <span class="stat-val">8 192</span>
+        <span class="stat-label">Max Tokens</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true">✦</div>
+      <div class="stat">
+        <span class="stat-val" id="stat-sessions">0</span>
+        <span class="stat-label">Active Sessions</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-ornament bottom-right" aria-hidden="true">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <polygon points="60,5 115,60 60,115 5,60" fill="none" stroke="#C9A227" stroke-width="0.8" opacity="0.4"/>
+      <polygon points="60,20 100,60 60,100 20,60" fill="none" stroke="#C9A227" stroke-width="0.6" opacity="0.3"/>
+      <polygon points="60,35 85,60 60,85 35,60" fill="none" stroke="#FFD700" stroke-width="0.5" opacity="0.25"/>
+      <line x1="60" y1="5" x2="60" y2="115" stroke="#C9A227" stroke-width="0.4" opacity="0.2"/>
+      <line x1="5" y1="60" x2="115" y2="60" stroke="#C9A227" stroke-width="0.4" opacity="0.2"/>
+    </svg>
+  </div>
+</header>
+
+<!-- ═══════════════════════  DIVIDER  ═══════════════════════ -->
+<div class="section-divider" aria-hidden="true">
+  <svg viewBox="0 0 1200 30" preserveAspectRatio="none">
+    <line x1="0" y1="15" x2="500" y2="15" stroke="#C9A227" stroke-width="0.5" opacity="0.4"/>
+    <polygon points="590,5 600,15 610,5 600,25" fill="none" stroke="#C9A227" stroke-width="0.8" opacity="0.7"/>
+    <polygon points="590,25 600,15 610,25" fill="#C9A227" opacity="0.3"/>
+    <line x1="700" y1="15" x2="1200" y2="15" stroke="#C9A227" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="250" cy="15" r="2" fill="#C9A227" opacity="0.4"/>
+    <circle cx="950" cy="15" r="2" fill="#C9A227" opacity="0.4"/>
+  </svg>
+</div>
+
+<!-- ═══════════════════════  CHAT SECTION  ═══════════════════════ -->
+<section class="chat-section" id="chat-section" aria-label="Chat interface">
+  <div class="section-header">
+    <!-- Message bubble SVG icon -->
+    <svg class="section-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M4 6 Q4 2 8 2 L24 2 Q28 2 28 6 L28 20 Q28 24 24 24 L12 24 L5 30 L5 24 Q4 24 4 20 Z"
+            fill="none" stroke="#C9A227" stroke-width="1.5" stroke-linejoin="round"/>
+      <line x1="10" y1="10" x2="22" y2="10" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+      <line x1="10" y1="15" x2="18" y2="15" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+    </svg>
+    <div>
+      <h2 class="section-title">Conversation Chamber</h2>
+      <p class="section-subtitle">Engage in multi-turn dialogue with elite AI reasoning</p>
+    </div>
+  </div>
+
+  <div class="chat-container" role="main">
+    <!-- Session bar -->
+    <div class="session-bar">
+      <div class="session-info">
+        <!-- Key SVG -->
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="8" cy="12" r="5" stroke="#C9A227" stroke-width="1.5"/>
+          <path d="M13 12h8M18 10v4" stroke="#C9A227" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span id="session-id-display">Session: ---</span>
+      </div>
+      <div class="session-actions">
+        <button class="icon-btn" id="new-session-btn" title="New Session" aria-label="Start new session">
+          <!-- Refresh SVG -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M1 4v6h6" stroke="#C9A227" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M23 20v-6h-6" stroke="#C9A227" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15" stroke="#C9A227" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="clear-btn" title="Clear History" aria-label="Clear conversation history">
+          <!-- Trash SVG -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <polyline points="3,6 5,6 21,6" stroke="#C9A227" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2" stroke="#C9A227" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages area -->
+    <div class="messages-area" id="messages-area" role="log" aria-live="polite" aria-label="Conversation messages">
+      <div class="welcome-message" id="welcome-msg">
+        <div class="welcome-crest" aria-hidden="true">
+          <!-- Crest SVG - elaborate geometric -->
+          <svg width="70" height="70" viewBox="0 0 70 70">
+            <polygon points="35,5 65,35 35,65 5,35" fill="none" stroke="#C9A227" stroke-width="1"/>
+            <polygon points="35,15 55,35 35,55 15,35" fill="none" stroke="#C9A227" stroke-width="0.7" opacity="0.6"/>
+            <circle cx="35" cy="35" r="10" fill="none" stroke="#FFD700" stroke-width="0.8" opacity="0.5"/>
+            <line x1="35" y1="5" x2="35" y2="65" stroke="#C9A227" stroke-width="0.4" opacity="0.3"/>
+            <line x1="5" y1="35" x2="65" y2="35" stroke="#C9A227" stroke-width="0.4" opacity="0.3"/>
+            <circle cx="35" cy="35" r="3" fill="#C9A227" opacity="0.8"/>
+            <polygon points="35,29 37,35 35,41 33,35" fill="#FFD700" opacity="0.6"/>
+          </svg>
+        </div>
+        <h3 class="welcome-title">Conrux Awaits Your Command</h3>
+        <p class="welcome-text">Begin with a question, a challenge, or a thought. Your session is private and persistent.</p>
+        <div class="suggestion-chips" role="list" aria-label="Suggested prompts">
+          <button class="chip" data-prompt="Explain quantum computing using an elegant metaphor." role="listitem">Quantum Computing</button>
+          <button class="chip" data-prompt="Write a Shakespearean sonnet about artificial intelligence." role="listitem">Write a Sonnet</button>
+          <button class="chip" data-prompt="What are the philosophical implications of consciousness in AI?" role="listitem">AI Philosophy</button>
+          <button class="chip" data-prompt="Analyze the global economic trends for 2025." role="listitem">Economic Analysis</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area" role="form" aria-label="Message input">
+      <div class="input-wrapper">
+        <textarea
+          id="chat-input"
+          class="chat-textarea"
+          placeholder="Speak your mind…"
+          rows="1"
+          maxlength="10000"
+          aria-label="Type your message"
+        ></textarea>
+        <div class="input-actions">
+          <span class="char-count" id="char-count" aria-live="polite">0 / 10000</span>
+          <button class="send-btn" id="send-btn" aria-label="Send message" disabled>
+            <!-- Send arrow SVG -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <line x1="22" y1="2" x2="11" y2="13" stroke="#0A0A0A" stroke-width="2" stroke-linecap="round"/>
+              <polygon points="22,2 15,22 11,13 2,9" fill="#0A0A0A"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="input-footer">
+        <span class="input-hint">
+          <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line
+        </span>
+        <div class="model-badge">
+          <!-- CPU SVG -->
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <rect x="4" y="4" width="16" height="16" rx="2" stroke="#C9A227" stroke-width="1.5"/>
+            <rect x="9" y="9" width="6" height="6" fill="#C9A227" opacity="0.5"/>
+            <line x1="9" y1="1" x2="9" y2="4" stroke="#C9A227" stroke-width="1.5"/>
+            <line x1="15" y1="1" x2="15" y2="4" stroke="#C9A227" stroke-width="1.5"/>
+            <line x1="9" y1="20" x2="9" y2="23" stroke="#C9A227" stroke-width="1.5"/>
+            <line x1="15" y1="20" x2="15" y2="23" stroke="#C9A227" stroke-width="1.5"/>
+            <line x1="1" y1="9" x2="4" y2="9" stroke="#C9A227" stroke-width="1.5"/>
+            <line x1="1" y1="15" x2="4" y2="15" stroke="#C9A227" stroke-width="1.5"/>
+            <line x1="20" y1="9" x2="23" y2="9" stroke="#C9A227" stroke-width="1.5"/>
+            <line x1="20" y1="15" x2="23" y2="15" stroke="#C9A227" stroke-width="1.5"/>
+          </svg>
+          Gemini 2.0 Flash
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  SECTION DIVIDER  ═══════════════════════ -->
+<div class="section-divider" aria-hidden="true">
+  <svg viewBox="0 0 1200 30" preserveAspectRatio="none">
+    <line x1="0" y1="15" x2="480" y2="15" stroke="#C9A227" stroke-width="0.5" opacity="0.3"/>
+    <polygon points="585,7 600,15 615,7" fill="none" stroke="#C9A227" stroke-width="0.7" opacity="0.6"/>
+    <polygon points="585,23 600,15 615,23" fill="none" stroke="#C9A227" stroke-width="0.7" opacity="0.6"/>
+    <circle cx="600" cy="15" r="2" fill="#C9A227" opacity="0.5"/>
+    <line x1="720" y1="15" x2="1200" y2="15" stroke="#C9A227" stroke-width="0.5" opacity="0.3"/>
+  </svg>
+</div>
+
+<!-- ═══════════════════════  VISION SECTION  ═══════════════════════ -->
+<section class="analysis-section" id="vision-section" aria-label="Image analysis">
+  <div class="section-header">
+    <!-- Eye SVG icon -->
+    <svg class="section-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M1 16 C6 6 26 6 31 16 C26 26 6 26 1 16Z" fill="none" stroke="#C9A227" stroke-width="1.5"/>
+      <circle cx="16" cy="16" r="5" fill="none" stroke="#C9A227" stroke-width="1.5"/>
+      <circle cx="16" cy="16" r="2" fill="#C9A227" opacity="0.5"/>
+      <line x1="16" y1="3" x2="16" y2="7" stroke="#C9A227" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+      <line x1="16" y1="25" x2="16" y2="29" stroke="#C9A227" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+    </svg>
+    <div>
+      <h2 class="section-title">Vision Analysis</h2>
+      <p class="section-subtitle">Upload any image and receive profound AI-powered visual insight</p>
+    </div>
+  </div>
+
+  <div class="dual-panel">
+    <!-- Upload Panel -->
+    <div class="panel upload-panel" id="img-upload-panel">
+      <div class="upload-zone" id="img-drop-zone" role="button" tabindex="0" aria-label="Click or drag image to upload">
+        <input type="file" id="img-file-input" accept="image/*" hidden aria-hidden="true" />
+        <!-- Camera SVG -->
+        <svg class="upload-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <rect x="2" y="12" width="44" height="30" rx="4" fill="none" stroke="#C9A227" stroke-width="1.5"/>
+          <circle cx="24" cy="27" r="9" fill="none" stroke="#C9A227" stroke-width="1.5"/>
+          <circle cx="24" cy="27" r="4" fill="#C9A227" opacity="0.3"/>
+          <path d="M16 12 L19 6 L29 6 L32 12" fill="none" stroke="#C9A227" stroke-width="1.5" stroke-linejoin="round"/>
+          <circle cx="40" cy="18" r="2" fill="#C9A227" opacity="0.7"/>
+        </svg>
+        <p class="upload-label">Drop image here or <span class="upload-browse">browse</span></p>
+        <p class="upload-hint">JPG, PNG, GIF, WEBP — max 20MB</p>
+      </div>
+      <div id="img-preview-container" class="preview-container hidden">
+        <img id="img-preview" class="preview-image" alt="Uploaded preview" />
+        <button class="remove-btn" id="img-remove-btn" aria-label="Remove image">✕ Remove</button>
+      </div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="panel controls-panel">
+      <label class="field-label" for="vision-prompt">Analysis Prompt</label>
+      <textarea id="vision-prompt" class="field-textarea" placeholder="What would you like to know? e.g. Describe the mood, identify all objects, read any text…" rows="4"></textarea>
+
+      <button class="btn-primary full-width" id="analyze-img-btn" disabled>
+        <!-- Magnifier SVG -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" stroke="#0A0A0A" stroke-width="2"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="#0A0A0A" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8" y1="11" x2="14" y2="11" stroke="#0A0A0A" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="11" y1="8" x2="11" y2="14" stroke="#0A0A0A" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Analyse Image
+      </button>
+
+      <div class="result-box hidden" id="vision-result" role="region" aria-label="Analysis result">
+        <div class="result-label">
+          <!-- Sparkle SVG -->
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#C9A227" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Visual Intelligence Report
+        </div>
+        <div class="result-content" id="vision-result-text"></div>
+        <div class="result-meta" id="vision-result-meta"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  DOCUMENT SECTION  ═══════════════════════ -->
+<section class="analysis-section" id="docs-section" aria-label="Document analysis">
+  <div class="section-header">
+    <!-- Scroll/Document SVG icon -->
+    <svg class="section-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M8 2 Q4 2 4 6 L4 26 Q4 30 8 30 L24 30 Q28 30 28 26 L28 8 L22 2 Z"
+            fill="none" stroke="#C9A227" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M22 2 L22 8 L28 8" fill="none" stroke="#C9A227" stroke-width="1.5" stroke-linejoin="round"/>
+      <line x1="9" y1="14" x2="23" y2="14" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+      <line x1="9" y1="19" x2="23" y2="19" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+      <line x1="9" y1="24" x2="17" y2="24" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+    </svg>
+    <div>
+      <h2 class="section-title">Document Chamber</h2>
+      <p class="section-subtitle">Extract intelligence from PDF, DOCX, TXT, CSV, JSON &amp; XLSX</p>
+    </div>
+  </div>
+
+  <div class="dual-panel">
+    <!-- Upload Panel -->
+    <div class="panel upload-panel">
+      <div class="upload-zone" id="doc-drop-zone" role="button" tabindex="0" aria-label="Click or drag document to upload">
+        <input type="file" id="doc-file-input" accept=".pdf,.docx,.txt,.csv,.json,.xlsx,.md" hidden aria-hidden="true" />
+        <!-- Document stack SVG -->
+        <svg class="upload-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <rect x="8" y="8" width="30" height="36" rx="3" fill="none" stroke="#C9A227" stroke-width="1.5" opacity="0.4"/>
+          <rect x="6" y="5" width="30" height="36" rx="3" fill="none" stroke="#C9A227" stroke-width="1.5" opacity="0.6"/>
+          <rect x="4" y="2" width="30" height="36" rx="3" fill="none" stroke="#C9A227" stroke-width="1.5"/>
+          <line x1="10" y1="12" x2="28" y2="12" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+          <line x1="10" y1="17" x2="28" y2="17" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+          <line x1="10" y1="22" x2="22" y2="22" stroke="#C9A227" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+          <path d="M19 28 L24 33 L29 28" fill="none" stroke="#C9A227" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+        </svg>
+        <p class="upload-label">Drop document here or <span class="upload-browse">browse</span></p>
+        <p class="upload-hint">PDF, DOCX, TXT, CSV, JSON, XLSX — max 20MB</p>
+      </div>
+      <div id="doc-file-info" class="file-info hidden"></div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="panel controls-panel">
+      <label class="field-label" for="doc-query">Analysis Query</label>
+      <textarea id="doc-query" class="field-textarea" placeholder="What shall I extract? e.g. Summarize key findings, extract all dates, create a table of contents…" rows="4"></textarea>
+
+      <button class="btn-primary full-width" id="analyze-doc-btn" disabled>
+        <!-- Brain SVG -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 3C6.24 3 4 5.24 4 8c0 1.2.44 2.3 1.17 3.13C4.45 11.67 4 12.79 4 14c0 2.21 1.34 4.1 3.27 4.77C7.1 19.85 7 20.42 7 21h10c0-.58-.1-1.15-.27-1.69C18.66 18.1 20 16.21 20 14c0-1.21-.45-2.33-1.17-2.87C19.56 10.3 20 9.2 20 8c0-2.76-2.24-5-5-5-1.37 0-2.6.55-3.5 1.44C10.6 3.55 9.37 3 9 3z" stroke="#0A0A0A" stroke-width="1.6" fill="none"/>
+        </svg>
+        Analyse Document
+      </button>
+
+      <div class="result-box hidden" id="doc-result" role="region" aria-label="Document analysis result">
+        <div class="result-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#C9A227" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Document Intelligence
+        </div>
+        <div class="result-content" id="doc-result-text"></div>
+        <div class="result-meta" id="doc-result-meta"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  FOOTER  ═══════════════════════ -->
+<footer class="footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <svg width="24" height="24" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <polygon points="5,30 10,14 20,22 30,14 35,30" fill="none" stroke="#C9A227" stroke-width="1.5" stroke-linejoin="round"/>
+        <line x1="5" y1="30" x2="35" y2="30" stroke="#C9A227" stroke-width="1.2"/>
+      </svg>
+      <span>Conrux AI by Blacifer</span>
+    </div>
+    <p class="footer-copy">© 2025 Blacifer · Powered by Google Gemini 2.0 Flash · v3.0.0</p>
+    <div class="footer-links">
+      <a href="/docs" class="footer-link" target="_blank">API Docs</a>
+      <a href="/redoc" class="footer-link" target="_blank">ReDoc</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════  TOAST NOTIFICATIONS  ═══════════════════════ -->
+<div id="toast-container" role="alert" aria-live="assertive"></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
