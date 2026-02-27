@@ -240,6 +240,20 @@ User Input
 
 ---
 
+## 🤖 Built With AI Assistance
+
+This project was designed, customised, and refined using a combination of:
+
+| Tool | Role |
+|---|---|
+| **Prompt Engineering** | Crafting precise instructions to guide AI model behaviour, system prompts, and pipeline logic |
+| **[Claude AI](https://claude.ai)** (Anthropic) | Architectural decisions, code review, and iterative design feedback |
+| **[Antigravity](https://antigravity.google)** (Google DeepMind) | Agentic coding assistant that implemented the full FastAPI backend, pipeline, frontend, and all project files |
+
+> The chatbot's architecture, pipeline logic, luxury frontend design, and professional project structure were all created through this AI-assisted development workflow.
+
+---
+
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
@@ -249,6 +263,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 <div align="center">
 
 **Made with ✦ by Blacifer**  
-Powered by Google Gemini · Built with FastAPI
+Powered by Google Gemini · Built with FastAPI · Crafted with AI
 
 </div>
